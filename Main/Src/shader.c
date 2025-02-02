@@ -1,13 +1,10 @@
-
-#include "../include/GL/glew.h"
+#include "../../include/GL/glew.h"
+#include <C:\SDL2\include\SDL2\SDL.h>
+#include "../../include/cglm/cglm.h"
+#include "../Headers/shader.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "./Headers/shader.h"
-#include <C:\SDL2\include\SDL2\SDL.h>
-#include <C:\SDL2\include\SDL2\SDL_opengl.h>
-#include "../include/cglm/cglm.h"
-
 //Initialize vertex and fragment shaders and link them to the shader program
 void init_shader(Shader *shader) {
     unsigned int vertexShader, fragmentShader;

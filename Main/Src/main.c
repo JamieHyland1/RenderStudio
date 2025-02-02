@@ -1,11 +1,14 @@
-#include "../include/GL/glew.h"
+#include "../../include/GL/glew.h"
 #include <C:\SDL2\include\SDL2\SDL.h>
-#include "./Headers/nuklear_container.h"
-#include "../include/cglm/cglm.h"
-#include "./Headers/shader.h"
+#include "../Headers/nuklear_container.h"
+#include "../../include/cglm/cglm.h"
+#include "../Headers/shader.h"
+#include "../Headers/texture.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "../Headers/stb_image.h"
+#include "../Headers/camera.h"
 
 #define FPS 60
 #define FRAME_TARGET_TIME  (1000 / FPS)
@@ -15,14 +18,14 @@
 static SDL_Window* window = NULL;
 SDL_DisplayMode displayMode;
 SDL_GLContext context = NULL;
-struct nk_context *ctx;
-struct nk_font *font;
+// struct nk_context *ctx;
+// struct nk_font *font;
 int window_width = 640;
 int window_height = 480;
 bool is_running = false;
 int previous_frame_time = 0;
 float delta_time = 0; 
-float vertices[] = {
+float cubeVertices[] = {
         -0.5f, -0.5f, -0.5f, 
          0.5f, -0.5f, -0.5f,  
          0.5f,  0.5f, -0.5f,  
@@ -65,13 +68,33 @@ float vertices[] = {
         -0.5f,  0.5f,  0.5f, 
         -0.5f,  0.5f, -0.5f, 
     };
-unsigned int cubeVAO,cubeVBO;
+float quadVertices[] = {
+    // positions          // colors           // texture coords
+     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left
+};
+unsigned int quadIndices[] = {  
+0, 1, 3, // first triangle
+1, 2, 3  // second triangle
+};
+
+
+unsigned int cubeVAO,cubeVBO,quadVAO,quadVBO,quadEBO;
+
 float fov = 45.0f;
 float aspect_ratio;
-mat4 model;
-mat4 view;
-mat4 projection;
+mat4 cubeModel;
+mat4 cubeView;
+mat4 cubeProjection;
+mat4 quadModel;
+mat4 quadView;
+mat4 quadProjection;
 Shader cubeShader;
+Shader quadShader;
+Texture tex1;
+Texture tex2;
 float a = 0;
 ///////////////////////////////////////////////////////////////////////////////
 // Setup function to initialize variables and game objects
@@ -106,23 +129,31 @@ int setup(void) {
     glewInit();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
-    // Create Nuklear context
-    ctx = nk_sdl_init(window);
-    struct nk_font_atlas *atlas;
-    nk_sdl_font_stash_begin(&atlas);
-    font = nk_font_atlas_add_default(atlas, 17.0f, NULL);
-    nk_sdl_font_stash_end();
+    //TODO: Create Nuklear context - Get back to this later
+    ////////////////////////////////////////////////////////
+    // ctx = nk_sdl_init(window);
+    // struct nk_font_atlas *atlas;
+    // nk_sdl_font_stash_begin(&atlas);
+    // font = nk_font_atlas_add_default(atlas, 17.0f, NULL);
+    // nk_sdl_font_stash_end();
+    //////////////////////////////////////////////////////////
     
-    glm_mat4_identity(model);
-    glm_mat4_identity(view);
-    glm_mat4_identity(projection);
+    glm_mat4_identity(cubeModel);
+    glm_mat4_identity(cubeView);
+    glm_mat4_identity(cubeProjection);
 
-    if (!font) {
-        fprintf(stderr, "Error: Nuklear font failed to load!\n");
-        exit(1);
-    }
+    glm_mat4_identity(quadModel);
+    glm_mat4_identity(quadView);
+    glm_mat4_identity(quadProjection);
 
-    nk_style_set_font(ctx, &font->handle);
+    // if (!font) {
+    //     fprintf(stderr, "Error: Nuklear font failed to load!\n");
+    //     exit(1);
+    // }
+
+   // nk_style_set_font(ctx, &font->handle);
+
+    stbi_set_flip_vertically_on_load(1);
     return true; 
 }
 
@@ -135,17 +166,48 @@ bool init_opengl(void) {
     glGenBuffers(1,&cubeVBO);
 
     glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
     glBindVertexArray(cubeVAO);
 
     glVertexAttribPointer(0,3,GL_FLOAT,false,3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    cubeShader.fragment_source  = "Shaders/fragment.glsl";
+
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glGenBuffers(1, &quadEBO);
+
+    glBindVertexArray(quadVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // texture coord attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+
     cubeShader.vertex_source    = "Shaders/vertex.glsl";
+    cubeShader.fragment_source  = "Shaders/fragment.glsl";
+
+    quadShader.vertex_source    = "Shaders/quadVertex.glsl";
+    quadShader.fragment_source  = "Shaders/quadFragment.glsl";
 
     init_shader(&cubeShader);
+    init_shader(&quadShader);
+
+    tex1 = init_texture("Assets/Textures/container.jpg");
+    tex2 = init_texture("Assets/Textures/gear5.jpg");
 
 
    return true;
@@ -157,7 +219,7 @@ bool init_opengl(void) {
 void process_input(void) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        nk_sdl_handle_event(&event);
+        //nk_sdl_handle_event(&event);
         switch (event.type) {
             case SDL_QUIT:
                 is_running = false;
@@ -182,11 +244,18 @@ void update(void) {
     delta_time = (current_time - previous_frame_time) / 1000.0;
     previous_frame_time = current_time;
     
-    glm_mat4_identity(model);
-    glm_translate(&model[0], (vec3){0.0,0.0,-5.0});
-    glm_rotate(&model[0], (a),(vec3){0.0,1.0,0.0});
+    glm_mat4_identity(cubeModel);
+    glm_translate(&cubeModel[0], (vec3){0.0,0.0,-5.0});
+    glm_rotate(&cubeModel[0], (a),(vec3){0.0,1.0,0.0});
     aspect_ratio = (float)window_width / (float)window_height;
-    glm_perspective(glm_rad(fov), aspect_ratio, 0.1f, 100.0f, projection);
+    //camera_look_at(&cubeView);
+    glm_perspective(glm_rad(fov), aspect_ratio, 0.1f, 100.0f, cubeProjection);
+
+    glm_mat4_identity(quadModel);
+    glm_translate(&quadModel[0], (vec3){-3.0,0.0,-5.0});
+    //glm_rotate(&quadModel[0], (a),(vec3){0.0,1.0,0.0});
+    aspect_ratio = (float)window_width / (float)window_height;
+    glm_perspective(glm_rad(fov), aspect_ratio, 0.1f, 100.0f, quadProjection);
     a+= 0.01;
     if(a > M_PI)a =0;
     
@@ -198,18 +267,36 @@ void update(void) {
 void render(void) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+   glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex1.id);
+    
+    glActiveTexture(GL_TEXTURE1); 
+    glBindTexture(GL_TEXTURE_2D, tex2.id);
     glUseProgram(cubeShader.shaderID);
-    set_matrix(cubeShader.shaderID,"model",model);
-    set_matrix(cubeShader.shaderID,"view",view);
-    set_matrix(cubeShader.shaderID,"projection",projection);
 
+    set_matrix(cubeShader.shaderID,"model",cubeModel);
+    set_matrix(cubeShader.shaderID,"view",cubeView);
+    set_matrix(cubeShader.shaderID,"projection",cubeProjection);
 
     glBindVertexArray(cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+    glUseProgram(quadShader.shaderID);
+    set_matrix(quadShader.shaderID,"model",quadModel);
+    set_matrix(quadShader.shaderID,"view",quadView);
+    set_matrix(quadShader.shaderID,"projection",quadProjection);
+    set_int(quadShader.shaderID,"texture1",0);
+    set_int(quadShader.shaderID,"texture2",1);
+    
+
+    glBindVertexArray(quadVAO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
     
 
     
-    nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
+    //nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
     SDL_GL_SwapWindow(window);
     
 }
