@@ -1,42 +1,78 @@
 #include "../include/GL/glew.h"
 #include <C:\SDL2\include\SDL2\SDL.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+#include "./Headers/nuklear_container.h"
+#include "../include/cglm/cglm.h"
+#include "./Headers/shader.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#define MAX_VERTEX_BUFFER 512 * 1024
-#define MAX_ELEMENT_BUFFER 128 * 1024
-#define NK_INCLUDE_FIXED_TYPES
-#define NK_INCLUDE_STANDARD_IO
-#define NK_INCLUDE_STANDARD_VARARGS
-#define NK_INCLUDE_DEFAULT_ALLOCATOR
-#define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
-#define NK_INCLUDE_FONT_BAKING
-#define NK_INCLUDE_DEFAULT_FONT
-#define NK_IMPLEMENTATION
-#define NK_SDL_GL3_IMPLEMENTATION
-#include "../include/Nuklear/nuklear.h"
-#include "../include/Nuklear/nuklear_sdl_gl3.h"
 
+#define FPS 60
+#define FRAME_TARGET_TIME  (1000 / FPS)
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables for execution status and game loop
 ///////////////////////////////////////////////////////////////////////////////
-enum {EASY, HARD};
-static int op = EASY;
-int window_width = 640;
-int window_height = 480;
-bool is_running = false;
-int previous_frame_time = 0;
-float delta_time = 0; 
-#define FPS 60
-#define FRAME_TARGET_TIME  (1000 / FPS)
 static SDL_Window* window = NULL;
 SDL_DisplayMode displayMode;
 SDL_GLContext context = NULL;
 struct nk_context *ctx;
 struct nk_font *font;
-static float value = 0.6f;
+int window_width = 640;
+int window_height = 480;
+bool is_running = false;
+int previous_frame_time = 0;
+float delta_time = 0; 
+float vertices[] = {
+        -0.5f, -0.5f, -0.5f, 
+         0.5f, -0.5f, -0.5f,  
+         0.5f,  0.5f, -0.5f,  
+         0.5f,  0.5f, -0.5f,  
+        -0.5f,  0.5f, -0.5f, 
+        -0.5f, -0.5f, -0.5f, 
+
+        -0.5f, -0.5f,  0.5f, 
+         0.5f, -0.5f,  0.5f,  
+         0.5f,  0.5f,  0.5f,  
+         0.5f,  0.5f,  0.5f,  
+        -0.5f,  0.5f,  0.5f, 
+        -0.5f, -0.5f,  0.5f, 
+
+        -0.5f,  0.5f,  0.5f, 
+        -0.5f,  0.5f, -0.5f, 
+        -0.5f, -0.5f, -0.5f, 
+        -0.5f, -0.5f, -0.5f, 
+        -0.5f, -0.5f,  0.5f, 
+        -0.5f,  0.5f,  0.5f, 
+
+         0.5f,  0.5f,  0.5f,  
+         0.5f,  0.5f, -0.5f,  
+         0.5f, -0.5f, -0.5f,  
+         0.5f, -0.5f, -0.5f,  
+         0.5f, -0.5f,  0.5f,  
+         0.5f,  0.5f,  0.5f,  
+
+        -0.5f, -0.5f, -0.5f, 
+         0.5f, -0.5f, -0.5f,  
+         0.5f, -0.5f,  0.5f,  
+         0.5f, -0.5f,  0.5f,  
+        -0.5f, -0.5f,  0.5f, 
+        -0.5f, -0.5f, -0.5f, 
+
+        -0.5f,  0.5f, -0.5f, 
+         0.5f,  0.5f, -0.5f,  
+         0.5f,  0.5f,  0.5f,  
+         0.5f,  0.5f,  0.5f,  
+        -0.5f,  0.5f,  0.5f, 
+        -0.5f,  0.5f, -0.5f, 
+    };
+unsigned int cubeVAO,cubeVBO;
+float fov = 45.0f;
+float aspect_ratio;
+mat4 model;
+mat4 view;
+mat4 projection;
+Shader cubeShader;
+float a = 0;
 ///////////////////////////////////////////////////////////////////////////////
 // Setup function to initialize variables and game objects
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,8 +112,10 @@ int setup(void) {
     nk_sdl_font_stash_begin(&atlas);
     font = nk_font_atlas_add_default(atlas, 17.0f, NULL);
     nk_sdl_font_stash_end();
-
-
+    
+    glm_mat4_identity(model);
+    glm_mat4_identity(view);
+    glm_mat4_identity(projection);
 
     if (!font) {
         fprintf(stderr, "Error: Nuklear font failed to load!\n");
@@ -86,6 +124,31 @@ int setup(void) {
 
     nk_style_set_font(ctx, &font->handle);
     return true; 
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Initialize various aspects of OpenGL for rendering
+///////////////////////////////////////////////////////////////////////////////
+bool init_opengl(void) {
+    glGenVertexArrays(1,&cubeVAO);
+    glGenBuffers(1,&cubeVBO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindVertexArray(cubeVAO);
+
+    glVertexAttribPointer(0,3,GL_FLOAT,false,3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    cubeShader.fragment_source  = "Shaders/fragment.glsl";
+    cubeShader.vertex_source    = "Shaders/vertex.glsl";
+
+    init_shader(&cubeShader);
+
+
+   return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -118,40 +181,37 @@ void update(void) {
     int current_time = SDL_GetTicks();
     delta_time = (current_time - previous_frame_time) / 1000.0;
     previous_frame_time = current_time;
+    
+    glm_mat4_identity(model);
+    glm_translate(&model[0], (vec3){0.0,0.0,-5.0});
+    glm_rotate(&model[0], (a),(vec3){0.0,1.0,0.0});
+    aspect_ratio = (float)window_width / (float)window_height;
+    glm_perspective(glm_rad(fov), aspect_ratio, 0.1f, 100.0f, projection);
+    a+= 0.01;
+    if(a > M_PI)a =0;
+    
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Render function to draw objects on the display
 ///////////////////////////////////////////////////////////////////////////////
 void render(void) {
-
-    if (nk_begin(ctx, "Text Editor", nk_rect(0, 0, window_width-720, 480),
-        NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
-        // fixed widget pixel width
-
-    }
-    nk_end(ctx);
-
-
-
-    if (nk_begin(ctx, "File Explorer", nk_rect(0, 480, window_width, window_height-480),
-    NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
-        
-
-    }
-    nk_end(ctx);
-
-    if (nk_begin(ctx, "Renderer", nk_rect(window_width-720, 0, 720, 480),
-    NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
-
-
-    }
-    nk_end(ctx);
-
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(cubeShader.shaderID);
+    set_matrix(cubeShader.shaderID,"model",model);
+    set_matrix(cubeShader.shaderID,"view",view);
+    set_matrix(cubeShader.shaderID,"projection",projection);
+
+
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+
+    
     nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
     SDL_GL_SwapWindow(window);
+    
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -172,7 +232,7 @@ void free_resources(void) {
 ///////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* args[]) {
     setup();
-    is_running = true;
+    is_running = init_opengl();
     glViewport(0, 0, window_width, window_height);
     while (is_running) {
         process_input();
