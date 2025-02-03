@@ -1,5 +1,4 @@
 #include "../Headers/texture.h"
-#include <C:\SDL2\include\SDL2\SDL.h>
 #include <C:\SDL2\include\SDL2\SDL_opengl.h>
 #include "../Headers/stb_image.h"
 #include <stdbool.h>
