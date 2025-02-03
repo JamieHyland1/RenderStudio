@@ -4,6 +4,7 @@ int setup_renderer();
 bool init_opengl();
 void process_input();
 void update();
+void renderUI();
 void render();
 void free_resources();
 
