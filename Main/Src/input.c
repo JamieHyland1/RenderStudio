@@ -7,6 +7,7 @@
 #include <C:\SDL2\include\SDL2\SDL.h>
 #include "../Headers/camera.h"
 #include "../Headers/input.h"
+#include "../Headers/nuklear_container.h"
 bool mouse_button_down;
 bool keyStates[SDL_NUM_SCANCODES] = {false};
 bool is_running = false;
@@ -16,7 +17,7 @@ bool is_running = false;
 void process_input(void) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        //nk_sdl_handle_event(&event);
+        nk_sdl_handle_event(&event);
         switch (event.type) {
             case SDL_QUIT:
                 is_running = false;
@@ -28,10 +29,10 @@ void process_input(void) {
                 keyStates[event.key.keysym.scancode] = false;
                 break;
             case SDL_MOUSEBUTTONDOWN:
-                mouse_button_down = true;
+                if(event.button.button == SDL_BUTTON_RIGHT)mouse_button_down = true;
                 break;
             case SDL_MOUSEBUTTONUP:
-                mouse_button_down = false;
+                if(event.button.button == SDL_BUTTON_RIGHT)mouse_button_down = false;
                 break;
             case SDL_MOUSEMOTION:
                     if(mouse_button_down){
