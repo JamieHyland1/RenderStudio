@@ -16,12 +16,12 @@ typedef struct {
 void init_camera(vec3 position, vec3 w_up);
 void camera_look_at(mat4* view);
 void process_mouse_move(float xPos, float yPos, float delta_time);
-void process_keyboard_movement(SDL_Event event, float delta_time);
+void process_keyboard_movement(float delta_time);
 void updateCameraVectors(float delta_time);
 void get_camera_position(vec3* vec);
 void get_camera_direction(vec3* vec);
 void rotate_camera_y(float delta);
 void rotate_around_point(vec3 target, float radius, float angle, mat4* view);
-
-
+extern float fov;
+extern Camera camera;
 #endif
