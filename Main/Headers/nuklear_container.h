@@ -13,6 +13,7 @@
 #define NK_INCLUDE_FONT_BAKING
 #define NK_INCLUDE_DEFAULT_FONT
 
+
 #include "../../include/Nuklear/nuklear.h"
 #include "../../include/Nuklear/nuklear_sdl_gl3.h"
 extern struct nk_context *ctx;

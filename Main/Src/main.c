@@ -6,8 +6,8 @@
 // Main function
 ///////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* args[]) {
-    setup_renderer();
-    is_running = init_opengl();
+    
+    is_running = setup_renderer() && init_opengl();
     while (is_running) {
         process_input();
         update();

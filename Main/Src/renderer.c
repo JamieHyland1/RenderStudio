@@ -280,21 +280,22 @@ void update(void) {
 ///////////////////////////////////////////////////////////////////////////////
 void renderUI(){
     static struct nk_colorf color = {1.0f, 0.0f, 0.0f, 1.0f};
+    
     if (nk_begin(ctx, "Debug Window", nk_rect(0, 0, 410, 500), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_MINIMIZABLE)) {
         
         // Define row layout with two columns: label + value
-        nk_layout_row_dynamic(ctx, 30, 2);
+        nk_layout_row_dynamic(ctx, 130, 2);
         // Display "Camera Position: "
         nk_label(ctx, "Camera Position:", NK_TEXT_LEFT);
         
         get_camera_position(&p);
         nk_labelf(ctx, NK_TEXT_LEFT, "(%.2f, %.2f, %.2f)", p[0], p[1], p[2]);
 
-        nk_layout_row_dynamic(ctx, 30, 2);
+        nk_layout_row_dynamic(ctx, 130, 2);
         nk_label(ctx, "Light Colour:", NK_TEXT_LEFT);
         color = nk_color_picker(ctx, color, NK_RGBA); // RGB mode (or NK_RGBA for alpha)
         
-        nk_layout_row_dynamic(ctx, 30, 2);
+        nk_layout_row_dynamic(ctx, 130, 2);
         nk_label(ctx,"Frame Rate: ",NK_TEXT_ALIGN_LEFT);
         nk_labelf(ctx, NK_TEXT_LEFT, "(%.2f)", fps);
 

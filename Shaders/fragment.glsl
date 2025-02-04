@@ -10,11 +10,21 @@ uniform vec3 lightColor;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+}; 
+
+  
+uniform Material material;
+
 void main()
 {   
 
     vec3 test = vec3(
-        0.612, 0.137, 0.525
+        1,1,1
      );
     float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
@@ -26,7 +36,7 @@ void main()
     vec3 diffuse = diff * lightColor;
     
     // specular
-    float specularStrength = 0.5;
+    float specularStrength = 0.95;
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);

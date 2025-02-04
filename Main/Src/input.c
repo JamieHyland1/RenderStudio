@@ -16,8 +16,10 @@ bool is_running = false;
 ///////////////////////////////////////////////////////////////////////////////
 void process_input(void) {
     SDL_Event event;
+    nk_input_begin(ctx);
     while (SDL_PollEvent(&event)) {
         nk_sdl_handle_event(&event);
+        
         switch (event.type) {
             case SDL_QUIT:
                 is_running = false;
@@ -47,4 +49,5 @@ void process_input(void) {
                     fov = 45.0f;
         }
     }
+    nk_input_end(ctx);
 }
