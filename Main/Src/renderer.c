@@ -8,6 +8,7 @@
 #include "../Headers/stb_image.h"
 #include "../Headers/camera.h"
 #include "../Headers/renderer.h"
+#include "../Headers/material.h"
 #include "../Headers/nuklear_container.h"
 
 #include <stdio.h>
@@ -15,7 +16,7 @@
 #include <stdbool.h>
 
 
-
+Material cubeMaterial;
 
 mat4 cubeModel;
 mat4 cubeView;
@@ -32,7 +33,7 @@ Shader lightShader;
 Texture tex1;
 Texture tex2;
 
-#define FPS 60
+#define FPS 30
 #define FRAME_TARGET_TIME  (1000 / FPS)
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -151,8 +152,10 @@ int setup_renderer(void) {
     glm_mat4_identity(quadProjection);
 
     init_camera((vec3){0,1,35},(vec3){0,1,0});
-
-   
+    setAmbient(&cubeMaterial,(vec3){1.0f, 0.5f, 0.31f});
+    setDiffuse(&cubeMaterial,(vec3){1.0f, 0.5f, 0.31f});
+    setSpecular(&cubeMaterial,(vec3){0.5f, 0.5f, 0.5f});
+    setShininess(&cubeMaterial, 32.0f);
 
     stbi_set_flip_vertically_on_load(1);
     glViewport(0, 0, window_width, window_height);
@@ -218,6 +221,8 @@ bool init_opengl(void) {
     init_shader(&cubeShader);
     init_shader(&quadShader);
     init_shader(&lightShader);
+
+    setShader(&cubeMaterial,&cubeShader);
 
     tex1 = init_texture("Assets/Textures/container.jpg");
     tex2 = init_texture("Assets/Textures/gear5.jpg");
@@ -295,7 +300,7 @@ void renderUI(){
         nk_label(ctx, "Light Colour:", NK_TEXT_LEFT);
         color = nk_color_picker(ctx, color, NK_RGBA); // RGB mode (or NK_RGBA for alpha)
         
-        nk_layout_row_dynamic(ctx, 130, 2);
+        nk_layout_row_dynamic(ctx, 160, 2);
         nk_label(ctx,"Frame Rate: ",NK_TEXT_ALIGN_LEFT);
         nk_labelf(ctx, NK_TEXT_LEFT, "(%.2f)", fps);
 
@@ -321,7 +326,7 @@ void render(void) {
     
     glActiveTexture(GL_TEXTURE1); 
     glBindTexture(GL_TEXTURE_2D, tex2.id);
-    glUseProgram(cubeShader.shaderID);
+    glUseProgram(cubeMaterial.shader->shaderID);
 
     set_matrix(cubeShader.shaderID,"model",cubeModel);
     set_matrix(cubeShader.shaderID,"view",cubeView);
@@ -329,6 +334,13 @@ void render(void) {
     set_vec3(cubeShader.shaderID,"lightColor", lightColor);
     set_vec3(cubeShader.shaderID,"lightPos", lightPos);
     set_vec3(cubeShader.shaderID,"viewPos", p);
+    set_vec3(cubeMaterial.shader->shaderID,"material.ambient",cubeMaterial.ambient);
+    set_vec3(cubeMaterial.shader->shaderID,"material.diffuse",cubeMaterial.diffuse);
+    set_vec3(cubeMaterial.shader->shaderID,"material.specular",cubeMaterial.specular);
+    set_float(cubeMaterial.shader->shaderID,"material.shininess",cubeMaterial.shininess);
+    set_vec3(cubeMaterial.shader->shaderID, "light.ambient",  (vec3){0.2f, 0.2f, 0.2f});
+    set_vec3(cubeMaterial.shader->shaderID, "light.diffuse",  (vec3){0.5f, 0.5f, 0.5f});
+    set_vec3(cubeMaterial.shader->shaderID, "light.specular",  (vec3){1.0f, 1.0f, 1.0f});
 
     for(int i = -5; i < 5; i ++ ){
         for(int j = -5; j < 5; j ++ ){
