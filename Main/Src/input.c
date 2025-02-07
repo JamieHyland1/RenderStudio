@@ -16,14 +16,19 @@ bool is_running = false;
 ///////////////////////////////////////////////////////////////////////////////
 void process_input(void) {
     SDL_Event event;
+    nk_input_begin(ctx);
     while (SDL_PollEvent(&event)) {
         nk_sdl_handle_event(&event);
+        
         switch (event.type) {
             case SDL_QUIT:
                 is_running = false;
                 break;
             case SDL_KEYDOWN:
                 keyStates[event.key.keysym.scancode] = true;
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    is_running = false;
+                }
                 break;
             case SDL_KEYUP:
                 keyStates[event.key.keysym.scancode] = false;
@@ -47,4 +52,5 @@ void process_input(void) {
                     fov = 45.0f;
         }
     }
+    nk_input_end(ctx);
 }

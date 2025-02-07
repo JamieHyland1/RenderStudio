@@ -1,6 +1,7 @@
 #ifndef shader_h
 #define shader_h
 #include <C:\SDL2\include\SDL2\SDL.h>
+#include <C:\SDL2\include\SDL2\SDL_opengl.h>
 #include "../../include/cglm/cglm.h"
 typedef struct {
     int shaderID;
