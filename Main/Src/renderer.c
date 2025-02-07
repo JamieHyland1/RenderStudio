@@ -99,7 +99,6 @@ void update(void) {
     // Calculate FPS
     fps = (delta_time > 0) ? (1.0f / delta_time) : 0.0f;
     process_keyboard_movement(delta_time);
-
    
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -117,7 +116,7 @@ void renderUI(){
         nk_layout_row_dynamic(ctx, 130, 2);
         // Display "Camera Position: "
         nk_label(ctx, "Camera Position:", NK_TEXT_LEFT);
-        Vec3 p = {0};
+        vec3 p = {0};
         get_camera_position(&p);
         nk_labelf(ctx, NK_TEXT_LEFT, "(%.2f, %.2f, %.2f)", p[0], p[1], p[2]);
 
@@ -135,21 +134,11 @@ void renderUI(){
 void render(void) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     renderUI();
     glEnable(GL_DEPTH_TEST);
 
-
-
-    
-
-
-
-
-    
     nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
     SDL_GL_SwapWindow(window);
-    
 }
 ///////////////////////////////////////////////////////////////////////////////
 // Free the memory that was dynamically allocated by the program
