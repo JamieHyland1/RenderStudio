@@ -26,6 +26,9 @@ void process_input(void) {
                 break;
             case SDL_KEYDOWN:
                 keyStates[event.key.keysym.scancode] = true;
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    is_running = false;
+                }
                 break;
             case SDL_KEYUP:
                 keyStates[event.key.keysym.scancode] = false;
