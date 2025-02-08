@@ -23,7 +23,8 @@ void init_camera(vec3 position, vec3 w_up){
     glm_vec3_normalize(&camera.right[0]);
 
     glm_vec3_cross(&camera.right[0],&camera.direction[0],&camera.up[0]);
-
+    glm_mat4_identity(camera.view);
+    
     updateCameraVectors(1);
 
 }
@@ -83,10 +84,10 @@ void process_keyboard_movement(float delta_time){
     updateCameraVectors(delta_time);
 
 }
-void camera_look_at(mat4* view){
+void camera_look_at(){
     vec3 t = {0.0,0.0,0.0};
     glm_vec3_add(&camera.position[0],&camera.direction[0],&t[0]);
-    glm_lookat_rh_no(&camera.position[0],&t[0],&camera.up[0], view[0]);
+    glm_lookat_rh_no(&camera.position[0],&t[0],&camera.up[0], &camera.view[0]);
 }
 void updateCameraVectors(float delta_time){
     // calculate the new Front vector
@@ -112,7 +113,7 @@ void updateCameraVectors(float delta_time){
     camera.cam_vel[1] = 0;
     camera.cam_vel[2] = 0;
     
-    
+  
 }
 void get_camera_position(vec3* vec){
     glm_vec3_copy(&camera.position[0],vec[0]);
@@ -141,3 +142,4 @@ void rotate_around_point(vec3 target, float radius, float angle, mat4* view) {
     // Update the view matrix
     glm_lookat_rh_no(camera.position, target, camera.up, view[0]);
 }
+
