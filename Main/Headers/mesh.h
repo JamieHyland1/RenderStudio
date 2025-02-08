@@ -2,6 +2,8 @@
 #define mesh_h
 #include "vertex.h"
 #include "texture.h"
+#include "material.h"
+
 typedef struct{
     Vertex *vertices;
     unsigned int *indices;
@@ -12,9 +14,10 @@ typedef struct{
     int numVertices;
     int numIndices;
     int numTextures;
-
+    mat4 model;
+    mat4 view;
+    mat4 projection;
 }Mesh;
 
 void init_mesh(Mesh *m);
-void draw_mesh(Mesh *m);
 #endif
