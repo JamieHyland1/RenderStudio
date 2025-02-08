@@ -2,6 +2,10 @@
 #include <C:\SDL2\include\SDL2\SDL_opengl.h>
 #include "../Headers/stb_image.h"
 #include <stdbool.h>
+
+
+
+
 Texture init_texture(const char* filename){
     Texture texture = {0, 0, 0, 0};  // Initialize struct to prevent undefined values
 
