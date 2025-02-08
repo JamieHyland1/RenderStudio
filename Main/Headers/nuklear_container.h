@@ -16,7 +16,8 @@
 
 #include "../../include/Nuklear/nuklear.h"
 #include "../../include/Nuklear/nuklear_sdl_gl3.h"
+#include <stdbool.h>
 extern struct nk_context *ctx;
-void initNuklear(SDL_Window* window);
+bool initNuklear(SDL_Window* window);
 
 #endif // NUKLEAR_CONTAINER_H

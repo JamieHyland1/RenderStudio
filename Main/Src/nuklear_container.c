@@ -6,10 +6,11 @@
 
 #include "../../include/Nuklear/nuklear.h"
 #include "../../include/Nuklear/nuklear_sdl_gl3.h"
+#include <stdbool.h>
 struct nk_context *ctx;
 struct nk_font *font;
 
-void initNuklear(SDL_Window* window){
+bool initNuklear(SDL_Window* window){
     ctx = nk_sdl_init(window);
     struct nk_font_atlas *atlas;
     nk_sdl_font_stash_begin(&atlas);
@@ -18,8 +19,9 @@ void initNuklear(SDL_Window* window){
 
      if (!font) {
         fprintf(stderr, "Error: Nuklear font failed to load!\n");
-        exit(1);
+        return false;
     }
 
    nk_style_set_font(ctx, &font->handle);
+   return true;
 }
