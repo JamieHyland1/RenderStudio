@@ -1,0 +1,10 @@
+CompileFlags:
+  Add:
+    - -I./include
+    - -IC:/msys64/mingw64/include
+    - -IC:/msys64/mingw64/include/SDL2
+    - -IC:/cimgui
+    - -IC:/cimgui/imgui
+    - -IC:/cimgui/generator/output
+    # optional but often nice:
+    - -std=c11

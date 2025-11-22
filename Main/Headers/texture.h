@@ -1,6 +1,6 @@
 #ifndef texture_h
 #define texture_h
-#include <C:\SDL2\include\SDL2\SDL_opengl.h>
+#include <SDL2/SDL_opengl.h>
 typedef struct{
     GLuint id;
     int width;

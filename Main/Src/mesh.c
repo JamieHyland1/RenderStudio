@@ -1,5 +1,5 @@
 
-#include <C:\SDL2\include\SDL2\SDL.h>
+#include <SDL2/SDL.h>
 #include "../../include/cglm/cglm.h"
 #include "../../include/GL/glew.h"
 #include "../Headers/mesh.h"

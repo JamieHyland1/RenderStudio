@@ -1,23 +1,16 @@
-
-#include <C:\SDL2\include\SDL2\SDL.h>
+#include <SDL2/SDL.h>
 #include "../../include/cglm/cglm.h"
 #include "../../include/GL/glew.h"
 
-#include "../Headers/shader.h"
-#include "../Headers/texture.h"
+#include "../Headers/globals.h"
 #include "../Headers/stb_image.h"
 #include "../Headers/camera.h"
 #include "../Headers/renderer.h"
-#include "../Headers/material.h"
+#include "../Headers/UI.h"
 #include "../Headers/model.h"
-#include "../Headers/nuklear_container.h"
 
 #include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
-
-
-
 #define FPS 60
 #define FRAME_TARGET_TIME  (1000 / FPS)
 
@@ -27,13 +20,8 @@
 static SDL_Window* window = NULL;
 SDL_DisplayMode displayMode;
 SDL_GLContext context = NULL;
-float fps;
-int window_width = 640;
-int window_height = 480;
-int previous_frame_time = 0;
-float delta_time = 0; 
-float aspect_ratio;
 Model model;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Setup function to initialize variables and game objects
@@ -54,25 +42,38 @@ int setup_renderer(void) {
     window_width = displayMode.w;
     window_height = displayMode.h;
 
-    window = SDL_CreateWindow("RenderLab", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(
+        "RenderLab",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        window_width,
+        window_height,
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+    );
 
     if (!window) {
         fprintf(stderr, "Error creating SDL window");
         return false;
     }
+
     context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, context);
+    SDL_GL_SetSwapInterval(1); // vsync
+
     glewExperimental = GL_TRUE;
     glewInit();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    initNuklear(window);
-
-
 
     stbi_set_flip_vertically_on_load(1);
     glViewport(0, 0, window_width, window_height);
+
+    init_gui(window,context);
+    clear_color[0] = 0.2f;
+    clear_color[1] = 0.3f;;
+    clear_color[2] = 0.3f;
     return true; 
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 // Initialize various aspects of OpenGL for rendering
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,6 +81,7 @@ bool init_opengl(void) {
     //TODO: ADD initialization code for models
     return true;
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 // Update function frame by frame with a fixed time step
 ///////////////////////////////////////////////////////////////////////////////
@@ -99,47 +101,25 @@ void update(void) {
     // Calculate FPS
     fps = (delta_time > 0) ? (1.0f / delta_time) : 0.0f;
     process_keyboard_movement(delta_time);
-   
 }
-///////////////////////////////////////////////////////////////////////////////
-// Render function to draw user interface
-///////////////////////////////////////////////////////////////////////////////
-void renderUI(){
-    static struct nk_colorf color = {1.0f, 1.0f, 1.0f, 1.0f};
-    
-    if (nk_begin(ctx, "Debug Window", nk_rect(0, 0, 410, 500), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_MINIMIZABLE)) {
-        
-        nk_layout_row_dynamic(ctx, 30, 2);
-        nk_label(ctx,"Frame Rate: ",NK_TEXT_ALIGN_LEFT);
-        nk_labelf(ctx, NK_TEXT_LEFT, "(%.2f)", fps);
-        // Define row layout with two columns: label + value
-        nk_layout_row_dynamic(ctx, 130, 2);
-        // Display "Camera Position: "
-        nk_label(ctx, "Camera Position:", NK_TEXT_LEFT);
-        vec3 p = {0};
-        get_camera_position(&p);
-        nk_labelf(ctx, NK_TEXT_LEFT, "(%.2f, %.2f, %.2f)", p[0], p[1], p[2]);
 
-        nk_layout_row_dynamic(ctx, 130, 2);
-        nk_label(ctx, "Light Colour:", NK_TEXT_LEFT);
-        color = nk_color_picker(ctx, color, NK_RGBA); // RGB mode (or NK_RGBA for alpha)
-        
-    
-    }
-    nk_end(ctx);
-}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Render function to draw objects on the display
 ///////////////////////////////////////////////////////////////////////////////
 void render(void) {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(clear_color[0], clear_color[1], clear_color[2], 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    renderUI();
-    glEnable(GL_DEPTH_TEST);
 
-    nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER);
+    // TODO: draw your 3D scene here
+
+    // Draw ImGui on top
+    renderUI();
+
+    glEnable(GL_DEPTH_TEST);
     SDL_GL_SwapWindow(window);
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 // Free the memory that was dynamically allocated by the program
 ///////////////////////////////////////////////////////////////////////////////

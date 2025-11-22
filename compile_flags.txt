@@ -1,0 +1,4 @@
+
+-std=c99
+-IC:/msys64/mingw64/include
+-IC:/msys64/mingw64/include/SDL2

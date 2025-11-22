@@ -1,6 +1,6 @@
 #ifndef camera_h
 #define camera_h
-#include <C:\SDL2\include\SDL2\SDL.h>
+#include <SDL2/SDL.h>
 #include "../../include/cglm/cglm.h"
 typedef struct {
     vec3 position;

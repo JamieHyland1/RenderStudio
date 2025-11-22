@@ -1,6 +1,6 @@
 #ifndef material_h
 #define material_h
-#include <C:\SDL2\include\SDL2\SDL.h>
+#include <SDL2/SDL.h>
 #include "../../include/cglm/cglm.h"
 #include "../Headers/shader.h"
 typedef struct {
